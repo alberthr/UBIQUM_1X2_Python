@@ -1,38 +1,37 @@
-final result
 
---------------------------------------------------------------
+--- final result
 
-% ganados ultimos 2 partidos del local
-% empatados ultimos 2 partidos del local
-% perdidos ultimos 2 partidos del local
+--- ganados ultimos 2 partidos del local
+--- empatados ultimos 2 partidos del local
+--- perdidos ultimos 2 partidos del local
 
-% ganados ultimos 5 partidos del local
-% empatados ultimos 5 partidos del local
-% perdidos ultimos 5 partidos del local
+--- ganados ultimos 5 partidos del local
+--- empatados ultimos 5 partidos del local
+--- perdidos ultimos 5 partidos del local
 
-% ganados ultimos 10 partidos del local
-% empatados ultimos 10 partidos del local
-% perdidos ultimos 10 partidos del local
+--- % ganados ultimos 10 partidos del local
+--- % empatados ultimos 10 partidos del local
+--- % perdidos ultimos 10 partidos del local
 
-% ganados ultimos 2 partidos del visitante
-% empatados ultimos 2 partidos del visitante
-% perdidos ultimos 2 partidos del visitante
+--- ganados ultimos 2 partidos del visitante
+--- empatados ultimos 2 partidos del visitante
+--- perdidos ultimos 2 partidos del visitante
 
-% ganados ultimos 5 partidos del visitante
-% empatados ultimos 5 partidos del visitante
-% perdidos ultimos 5 partidos del visitante
+--- ganados ultimos 5 partidos del visitante
+--- empatados ultimos 5 partidos del visitante
+--- perdidos ultimos 5 partidos del visitante
 
-% ganados ultimos 10 partidos del visitante
-% empatados ultimos 10 partidos del visitante
-% perdidos ultimos 10 partidos del visitante
+--- ganados ultimos 10 partidos del visitante
+--- empatados ultimos 10 partidos del visitante
+--- perdidos ultimos 10 partidos del visitante
 
-total liga % ganados como local del local
-total liga % empatados como local del local
-total liga % perdidos como local del local
+--- total liga % ganados como local del local
+--- total liga % empatados como local del local
+--- total liga % perdidos como local del local
 
-total liga % ganados como visitante del visitante
-total liga % empatados como visitante del visitante
-total liga % perdidos como visitante del visitant
+--- total liga % ganados como visitante del visitante
+--- total liga % empatados como visitante del visitante
+--- total liga % perdidos como visitante del visitant
 
 % h2h ultimos 10 partidos totales gana el local
 % h2h ultimos 10 partidos totales empata 
