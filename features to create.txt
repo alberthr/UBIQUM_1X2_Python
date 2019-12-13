@@ -33,26 +33,26 @@
 --- total liga % empatados como visitante del visitante
 --- total liga % perdidos como visitante del visitant
 
-% h2h ultimos 10 partidos totales gana el local
-% h2h ultimos 10 partidos totales empata 
-% h2h ultimos 10 partidos totales gana el visitante
+--- % h2h ultimos 10 partidos totales gana el local
+--- % h2h ultimos 10 partidos totales empata 
+--- % h2h ultimos 10 partidos totales gana el visitante
 
-% h2h ultimos 5 partidos en casa del local gana el local
-% h2h ultimos 5 partidos en casa del local hay empate
-% h2h ultimos 5 partidos en casa del local gana el visitante
+--- % h2h ultimos 5 partidos en casa del local gana el local
+--- % h2h ultimos 5 partidos en casa del local hay empate
+--- % h2h ultimos 5 partidos en casa del local gana el visitante
 
-% partidos que gana el local con el arbitro
-% partidos que empata el local con el arbitro
-% partidos que pierde el local con el arbitro
+--- % partidos que gana el local con el arbitro
+--- % partidos que empata el local con el arbitro
+--- % partidos que pierde el local con el arbitro
 
-% partidos que gana el local en casa con el arbitro
-% partidos que empata el local en casa con el arbitro
-% partidos que pierde el local en casa con el arbitro
+--- % partidos que gana el local en casa con el arbitro
+--- % partidos que empata el local en casa con el arbitro
+--- % partidos que pierde el local en casa con el arbitro
 
-% partidos que gana el visitante con el arbitro
-% partidos que empata el visitante con el arbitro
-% partidos que pierde el visitante con el arbitro
+--- % partidos que gana el visitante con el arbitro
+--- % partidos que empata el visitante con el arbitro
+--- % partidos que pierde el visitante con el arbitro
 
-% partidos que gana el visitante fuera con el arbitro
-% partidos que empata visitante fuera con el arbitro
-% partidos que pierde visitante fuera con el arbitro
+--- % partidos que gana el visitante fuera con el arbitro
+--- % partidos que empata visitante fuera con el arbitro
+--- % partidos que pierde visitante fuera con el arbitro
