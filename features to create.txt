@@ -1,58 +1,8 @@
-
---- final result
-
---- ganados ultimos 2 partidos del local
---- empatados ultimos 2 partidos del local
---- perdidos ultimos 2 partidos del local
-
---- ganados ultimos 5 partidos del local
---- empatados ultimos 5 partidos del local
---- perdidos ultimos 5 partidos del local
-
---- % ganados ultimos 10 partidos del local
---- % empatados ultimos 10 partidos del local
---- % perdidos ultimos 10 partidos del local
-
---- ganados ultimos 2 partidos del visitante
---- empatados ultimos 2 partidos del visitante
---- perdidos ultimos 2 partidos del visitante
-
---- ganados ultimos 5 partidos del visitante
---- empatados ultimos 5 partidos del visitante
---- perdidos ultimos 5 partidos del visitante
-
---- ganados ultimos 10 partidos del visitante
---- empatados ultimos 10 partidos del visitante
---- perdidos ultimos 10 partidos del visitante
-
---- total liga % ganados como local del local
---- total liga % empatados como local del local
---- total liga % perdidos como local del local
-
---- total liga % ganados como visitante del visitante
---- total liga % empatados como visitante del visitante
---- total liga % perdidos como visitante del visitant
-
---- % h2h ultimos 10 partidos totales gana el local
---- % h2h ultimos 10 partidos totales empata 
---- % h2h ultimos 10 partidos totales gana el visitante
-
---- % h2h ultimos 5 partidos en casa del local gana el local
---- % h2h ultimos 5 partidos en casa del local hay empate
---- % h2h ultimos 5 partidos en casa del local gana el visitante
-
---- % partidos que gana el local con el arbitro
---- % partidos que empata el local con el arbitro
---- % partidos que pierde el local con el arbitro
-
---- % partidos que gana el local en casa con el arbitro
---- % partidos que empata el local en casa con el arbitro
---- % partidos que pierde el local en casa con el arbitro
-
---- % partidos que gana el visitante con el arbitro
---- % partidos que empata el visitante con el arbitro
---- % partidos que pierde el visitante con el arbitro
-
---- % partidos que gana el visitante fuera con el arbitro
---- % partidos que empata visitante fuera con el arbitro
---- % partidos que pierde visitante fuera con el arbitro
+canviar dades a mongodb
+quiniela adhoc amb desplegable
+botons hover gris
+layout adal 
+retocar fonts
+posar icones colors (glyphicons)
+posar logo quiniela
+treure icono blau sota dreta

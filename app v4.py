@@ -5,7 +5,6 @@ import dash_html_components as html
 import dash_table
 from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
-
 import pandas as pd
 import numpy as np
 import requests
@@ -13,13 +12,204 @@ from bs4 import BeautifulSoup
 import json
 import datetime
 import pickle
-from itertools import product
-#from random import choices
+from itertools import product, groupby
+from random import choices
+import os
+import pymongo
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css', 'https://codepen.io/chriddyp/pen/brPBPO.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
+
+# CONNECTION TO MONGO
+client = pymongo.MongoClient(
+    "mongodb+srv://Albert:madannnn@cluster0-wghee.mongodb.net/test?retryWrites=true&w=majority")
+db = client.quiniela
+mongo = list(db.teams.find({}))
+mongo[0].pop('_id')
+teamsmdb = list(mongo[0].keys())
+
+
+# FIRST QUINIELA WHEN LOADING APP
+local =['Barcelona', 'Barcelona', 'Real Madrid', 'Real Betis', 'Sevilla', 'Espanyol', 
+        'Real Sociedad', 'Atletico Madrid', 'Real Madrid', 'Atletico Madrid', 
+        'Valencia', 'Athletic Club', 'Sevilla', 'Barcelona']
+visitante =['Real Madrid', 'Espanyol', 'Barcelona', 'Sevilla', 'Real Betis', 'Barcelona', 
+            'Athletic Club', 'Barcelona', 'Atletico Madrid', 'Real Madrid', 
+            'Real Madrid', 'Barcelona', 'Barcelona', 'Atletico Madrid']
+
+df = pd.DataFrame(list(zip(local, visitante)), columns =['LOCAL', 'VISITANTE']) 
+df['1'] = df['X'] = df['2'] = 0.3333
+df_teams = df.iloc[:, :2]
+df_probs = df.iloc[:, 2:]
+
+
+
+
+    
+app.layout = dcc.Loading([ 
+
+html.Div([
+        html.Div([
+            html.Div([html.H5('QUINIELA', style={'textAlign':'center', 'width':'100%', 'backgroundColor':'#e3e3e3', 'marginBottom':10}),]),
+            
+            html.Div([                    
+                    html.Div([       
+                            dash_table.DataTable(
+                                    id='tabla-quin', 
+                                    columns=[{"name": i, "id": i, 'presentation':'dropdown'} for i in df_teams.columns], 
+                                    data=df_teams.to_dict('records'),                                    
+                                    editable=True,
+                                    dropdown={
+                                        'LOCAL': {
+                                            'options': [
+                                                {'label': i, 'value': i}
+                                                for i in teamsmdb
+                                            ]
+                                        },
+                                        'VISITANTE': {
+                                             'options': [
+                                                {'label': i, 'value': i}
+                                                for i in teamsmdb
+                                            ]
+                                        }
+                                    },
+                                    style_cell_conditional=[
+                                            {'if': {'column_id': 'LOCAL'}, 'width': '50%'},
+                                            {'if': {'column_id': 'VISITANTE'},'width': '50%'},
+                                            {'textAlign':'center'}
+                                    ], 
+                                    style_cell={'height': '35px'},
+                                    style_header={'height':'30px'},
+                            ),                
+                    ], style={'width':'60%', 'padding':'0px 2px 0px 0px'}),
+                        
+                    html.Div([       
+                            dash_table.DataTable(
+                                    id='tabla-probs', 
+                                    columns=[{"name": i, "id": i} for i in df_probs.columns], 
+                                    data=df_probs.to_dict('records'),
+                                    editable=False,
+                                    style_cell={'height': '35px'},
+                                    style_header={'height':'30px'},                                    
+                                    style_cell_conditional=[
+                                            {'textAlign':'center'}
+                                    ], 
+                            ),                
+                    ], style={'width':'40%','padding':'0px 0px 0px 2px'}),
+                    
+                    html.Div([       
+                            dash_table.DataTable(
+                                    id='tabla-hidden', 
+                                    columns=[{"name": i, "id": i} for i in df_probs.columns], 
+                                    data=df_probs.to_dict('records'),
+                            ),                
+                    ], style={'display':'none'}),
+
+            ], style={'display':'flex', 'flexDirection':'row'})
+            
+        ], style={'width':'50%', 'padding':'15px 5px 5px 15px',}),
+        
+        html.Div([
+            html.Div([html.H5('CONFIGURACIO', style={'textAlign':'center', 'width':'100%', 'backgroundColor':'#e3e3e3', 'borderRight':'2px solid #e3e3e3'}),], style={'marginBottom':10}),
+            
+            html.Div([
+                html.Div([
+                
+                        html.Div([
+                                html.Button(
+                                        id='update-button', 
+                                        n_clicks=0, 
+                                        children='Update', 
+                                        style={'width':150, 'marginRight': 10}),
+                                html.Div(
+                                        id="update-text", 
+                                        children="Update database with last games", 
+                                        style={'display': 'inline-block'})                        
+                                ], style={'marginBottom': 3, 'marginTop': 3}),
+                                
+                        html.Div([html.Button(id='loadquin-button', n_clicks=0, children='Load', style={'width':150, 'marginRight': 10}),  "Load current Quiniela"], style={'marginBottom': 3, 'marginTop': 3}),
+                        html.Div([html.Button(id='probsquin-button', n_clicks=0, children='Probabilities', style={'width':150, 'marginRight': 10}),  "Calculate 1X2 probabilities"], style={'marginBottom': 3, 'marginTop': 3}),
+                        html.Div([html.Button(id='limits-button', n_clicks=0, children='Limits', style={'width':150, 'marginRight': 10}),  "Limits on 1X2 results"], style={'marginBottom': 3, 'marginTop': 3}),
+                        
+                        html.Div([
+                                html.Div([html.Div(children='Extreme', style={'float':'left', 'width':150, 'display':'inline-block', 'lineHeight':'38px', 'textAlign':'center', 'fontSize':11, 'letterSpacing':'.1rem', 'textTransform':'uppercase', 'fontWeight':600, 'border':'1px solid #bbb', 'boxSizing':'border-box', 'borderRadius':4, 'color':'#555'}), 
+                                          html.Div([dcc.Slider(id='extreme', min=0,max=100, marks={i: 'Label {}'.format(i) if i == 1 else str(i) for i in range(0, 110, 10)}, value=0)], style={'marginLeft':150, 'paddingTop':4})
+                                ]),
+                        ]),
+                               
+                        html.Hr(style={'marginTop':24, 'marginBottom':20}),
+            
+                        html.Div([
+                                html.Div([html.Div("", style={'float':'left', 'width':150})], style={'marginRight':10}),
+                                html.Div([
+                                        html.Div([html.Div('1 results', style={'width':'100%', 'textAlign':'center'})], style={'width':'33%', 'padding':2}),
+                                        html.Div([html.Div('X results', style={'width':'100%', 'textAlign':'center'})], style={'width':'33%', 'padding':2}),
+                                        html.Div([html.Div('2 results', style={'width':'100%', 'textAlign':'center'})], style={'width':'33%', 'padding':2}),
+                                ], style={'display':'flex', 'flexDirection':'row', 'width':'100%'})
+                        ], style={'display':'flex', 'flexDirection':'row'}),
+                        
+                        html.Div([
+                                html.Div([html.Div("Minimum:", style={'lineHeight':'38px', 'textAlign':'center', 'float':'left', 'width':150})], style={'marginRight':10}),
+                                html.Div([
+                                        html.Div([dcc.Input(id="min1", value=0, type='number', style={'width':'100%'})], style={'width':'33%', 'padding':2}),
+                                        html.Div([dcc.Input(id="minx", value=0, type='number', style={'width':'100%'})], style={'width':'33%', 'padding':2}),                        
+                                        html.Div([dcc.Input(id="min2", value=0, type='number', style={'width':'100%'})], style={'width':'33%', 'padding':2}),                            
+                                ], style={'display':'flex', 'flexDirection':'row', 'width':'100%'})
+                        ], style={'display':'flex', 'flexDirection':'row'}),
+                        
+                        html.Div([
+                                html.Div([html.Div("Maximum:", style={'lineHeight':'38px', 'textAlign':'center', 'float':'left', 'width':150})], style={'marginRight':10}),
+                                html.Div([
+                                        html.Div([dcc.Input(id="max1", value=14, type='number', style={'width':'100%'})], style={'width':'33%', 'padding':2}),
+                                        html.Div([dcc.Input(id="maxx", value=14, type='number', style={'width':'100%'})], style={'width':'33%', 'padding':2}),                        
+                                        html.Div([dcc.Input(id="max2", value=14, type='number', style={'width':'100%'})], style={'width':'33%', 'padding':2}),                            
+                                ], style={'display':'flex', 'flexDirection':'row', 'width':'100%'})
+                        ], style={'display':'flex', 'flexDirection':'row'}),
+            
+                        html.Div([
+                                html.Div([html.Div("Longest Streak:", style={'lineHeight':'38px', 'textAlign':'center', 'float':'left', 'width':150})], style={'marginRight':10}),
+                                html.Div([
+                                        html.Div([dcc.Input(id="str1", value=14, type='number', style={'width':'100%'})], style={'width':'33%', 'padding':2}),
+                                        html.Div([dcc.Input(id="strx", value=14, type='number', style={'width':'100%'})], style={'width':'33%', 'padding':2}),                        
+                                        html.Div([dcc.Input(id="str2", value=14, type='number', style={'width':'100%'})], style={'width':'33%', 'padding':2}),                            
+                                ], style={'display':'flex', 'flexDirection':'row', 'width':'100%'})
+                        ], style={'display':'flex', 'flexDirection':'row'}),
+                    
+                ], style={'padding':20})
+                
+            ], style={'width': '100%', 'border':'1px solid #d3d3d3', 'minHeight':'518px'}),
+                        
+        ], style={'width':'50%', 'padding':'15px 15px 5px 5px',}),    
+], style={'display':'flex', 'flexDirection':'row'}),
+                    
+html.Div([
+        html.Div([
+                html.Div([
+                        html.Div("Number of bets:", style={'lineHeight':'38px', 'marginRight':15}),
+                        dcc.Input(id="nquin", value=25, type='number', style={'width':100, 'height':38}),
+                        html.Button(id='calc-button', n_clicks=0, children='Calculate', style={'marginLeft': 10}),                               
+                ], style={'float':'left', 'width':380, 'display':'flex', 'flexDirection':'row'})
+        ], style={}),
+                    
+        html.Div([
+                html.Div(children="No file with bets generated yet.", id="status-quin", style={'lineHeight':'38px', 'marginLeft':15,})
+        ], style={'backgroundColor':'#f3f3f3', 'width':'100%'})                    
+], style={'display':'flex', 'flexDirection':'row', 'padding':'10px 15px', 'margin':'5px 13px 0 15px', 'border':'1px solid #d3d3d3'}),
+
+
+], type='dot', fullscreen=True)
+
+
+
+# evaluates streak of serie
+def eval_streak(serie, res):
+    out = [sum(1 for j in group) for j, group in groupby(serie) if j==res]
+    if len(out) < 1:
+        return(0)
+    else:
+        return(max(out))
 
 # max and mins 1X2 of quiniela
 def min_max(df, result, threshold=0.2):
@@ -135,115 +325,6 @@ def ref_away_away(df, date, away_team, referee):
 
 
 
-
-
-df = pd.read_excel('./bbdd/QUINIELA_3_PROBS.xlsx')
-df_teams = df.iloc[:14, :2]
-df_probs = df.iloc[:14, 2:]
-df_probs['1'] = round(100 * df['1'], 2)
-df_probs['X'] = round(100 * df['X'], 2)
-df_probs['2'] = round(100 * df['2'], 2)
-
-    
-app.layout = html.Div([
-        
-    html.Div([
-        html.H5('QUINIELA', style={'textAlign':'center', 'marginBottom':15}),
-        html.Div([
-                html.Div([       
-                        dash_table.DataTable(
-                                id='tabla-quin', 
-                                columns=[{"name": i, "id": i} for i in df_teams.columns], 
-                                data=df_teams.to_dict('records'),
-                                style_cell_conditional=[
-                                        {'if': {'column_id': 'LOCAL'}, 'width': '50%'},
-                                        {'if': {'column_id': 'VISITANTE'},'width': '50%'},
-                                        {'textAlign':'center'}
-                                ], 
-                        ),                
-                ], style={'width':'60%', 'padding':2}),
-                    
-                html.Div([       
-                        dash_table.DataTable(
-                                id='tabla-probs', 
-                                columns=[{"name": i, "id": i} for i in df_probs.columns], 
-                                data=df_probs.to_dict('records'),
-                                style_cell_conditional=[
-                                        {'textAlign':'center'}
-                                ], 
-                        ),                
-                ], style={'width':'40%','padding':2}),
-        ], style={'display':'flex', 'flexDirection':'row'})
-
-    ], style={'width': '50%', 'padding':15}),
-
-    html.Div([
-        html.H5('CONFIGURACIÓ GENERAL', style={'textAlign':'center', 'marginBottom':15}),
-        
-        html.Div([
-                html.Button(
-                        id='update-button', 
-                        n_clicks=0, 
-                        children='Update', 
-                        style={'width':150, 'marginRight': 10}),
-                html.Div(
-                        id="update-text", 
-                        children="Update database with last games", 
-                        style={'display': 'inline-block'})                        
-                ], style={'marginBottom': 3, 'marginTop': 3}),
-                
-        html.Div([html.Button(id='loadquin-button', n_clicks=0, children='Load', style={'width':150, 'marginRight': 10}),  "Load current Quiniela"], style={'marginBottom': 3, 'marginTop': 3}),
-        html.Div([html.Button(id='probsquin-button', n_clicks=0, children='Probabilities', style={'width':150, 'marginRight': 10}),  "Calculate 1X2 probabilities"], style={'marginBottom': 3, 'marginTop': 3}),
-        html.Div([html.Button(id='limits-button', n_clicks=0, children='Limits', style={'width':150, 'marginRight': 10}),  "Limits on 1X2 results"], style={'marginBottom': 3, 'marginTop': 3}),
-        dcc.Slider(id='extreme', min=0,max=100, marks={i: 'Label {}'.format(i) if i == 1 else str(i) for i in range(0,110, 10)}, value=0,),
-        html.Hr(style={'marginTop':20, 'marginBottom':15}),
-
-        html.Div([
-                html.Div([html.Div("", style={'padding':10, 'textAlign':'right'})], style={'width':'25%'}),
-                html.Div([html.Div("1 results", style={'padding':5, 'textAlign':'center'})], style={'width':'25%'}),
-                html.Div([html.Div("X results", style={'padding':5, 'textAlign':'center'})], style={'width':'25%'}),
-                html.Div([html.Div("2 results", style={'padding':5, 'textAlign':'center'})], style={'width':'25%'}),
-        ], style={'display':'flex', 'flexDirection':'row'}),
-        
-        html.Div([
-                html.Div([html.Div("Minimum Results:", style={'padding':10, 'textAlign':'right'})], style={'width':'25%'}),
-                html.Div([dcc.Input(id="min1", value=0, type='number', style={'width':'100%', 'height':30})], style={'width':'25%', 'padding':2}),
-                html.Div([dcc.Input(id="minx", value=0, type='number', style={'width':'100%'})], style={'width':'25%', 'padding':2}),                        
-                html.Div([dcc.Input(id="min2", value=0, type='number', style={'width':'100%'})], style={'width':'25%', 'padding':2}),
-        ], style={'display':'flex', 'flexDirection':'row'}),
-        
-        html.Div([
-                html.Div([html.Div("Maximum Results:", style={'padding':10, 'textAlign':'right'})], style={'width':'25%'}),
-                html.Div([dcc.Input(id="max1", value=14, type='number', style={'width':'100%'})], style={'width':'25%', 'padding':2}),
-                html.Div([dcc.Input(id="maxx", value=14, type='number', style={'width':'100%'})], style={'width':'25%', 'padding':2}),                        
-                html.Div([dcc.Input(id="max2", value=14, type='number', style={'width':'100%'})], style={'width':'25%', 'padding':2}),
-        ], style={'display':'flex', 'flexDirection':'row'}),
-
-        html.Div([
-                html.Div([html.Div("Longest Streak:", style={'padding':10, 'textAlign':'right'})], style={'width':'25%'}),
-                html.Div([dcc.Input(id="str1", value=14, type='number', style={'width':'100%'})], style={'width':'25%', 'padding':2}),
-                html.Div([dcc.Input(id="strx", value=14, type='number', style={'width':'100%'})], style={'width':'25%', 'padding':2}),                        
-                html.Div([dcc.Input(id="str2", value=14, type='number', style={'width':'100%'})], style={'width':'25%', 'padding':2}),
-        ], style={'display':'flex', 'flexDirection':'row'})
-        
-    ], style={'width': '50%', 'padding':15}),
-                
-
-
-    html.Div([       
-            dash_table.DataTable(
-                    id='tabla-hidden', 
-                    columns=[{"name": i, "id": i} for i in df_probs.columns], 
-                    data=df_probs.to_dict('records'),
-            ),                
-    ], style={'display':'none'}),
-
-    
-], style={'display':'flex', 'flexDirection':'row'})
-
-
-
-
 @app.callback(Output('tabla-quin', 'data'),
               [Input('loadquin-button', 'n_clicks')])
 def update_quiniela(n_clicks):
@@ -266,6 +347,7 @@ def update_quiniela(n_clicks):
         df['LOCAL'] = [teams_dict[i] for i in df['LOCAL']]
         df['VISITANTE'] = [teams_dict[i] for i in df['VISITANTE']]
         return(df.to_dict('records'))
+    
     
     
 @app.callback(Output('update-text', 'children'),
@@ -513,9 +595,9 @@ def update_probsquin(n_clicks, json_quin):
 def update_tabla_hidden(valor, json_quin):
     probs_1X2 = pd.DataFrame.from_dict(json_quin, orient='columns')
     multiplicador = 1+(valor/100)
-    prob_1 = probs_1X2['1']**multiplicador
-    prob_X = probs_1X2['X']**multiplicador
-    prob_2 = probs_1X2['2']**multiplicador
+    prob_1 = probs_1X2['1'].apply(lambda x: float(x))**multiplicador
+    prob_X = probs_1X2['X'].apply(lambda x: float(x))**multiplicador
+    prob_2 = probs_1X2['2'].apply(lambda x: float(x))**multiplicador
     probs_1X2['1'] = prob_1 / (prob_1+prob_2+prob_X)
     probs_1X2['X'] = prob_X / (prob_1+prob_2+prob_X)
     probs_1X2['2'] = prob_2 / (prob_1+prob_2+prob_X)
@@ -535,7 +617,9 @@ def update_limits(n_clicks, json_quin):
         raise PreventUpdate
     else:
         df_quin = pd.DataFrame.from_dict(json_quin, orient='columns')
-        df_quin = df_quin / 100
+        df_quin['1'] = df_quin['1'].apply(lambda x: float(x)/100)
+        df_quin['X'] = df_quin['X'].apply(lambda x: float(x)/100)
+        df_quin['2'] = df_quin['2'].apply(lambda x: float(x)/100)
         print('calculando minimo y maximo de 1')
         min_1, max_1 = min_max(df_quin, '1')
         print('calculando minimo y maximo de X')
@@ -557,8 +641,60 @@ def update_limits(n_clicks, json_quin):
         print('proceso acabado correctamente')
         return(min_1, max_1, min_x, max_x, min_2, max_2, streak1, streakx, streak2)
 
-   
-    
-    
+
+
+@app.callback(Output('status-quin', 'children'),
+              [Input('calc-button', 'n_clicks')], 
+              [State('nquin', 'value'),
+               State('min1', 'value'), State('max1', 'value'),
+               State('minx', 'value'), State('maxx', 'value'),
+               State('min2', 'value'), State('max2', 'value'),
+               State('str1', 'value'), State('strx', 'value'), State('str2', 'value'),
+               State('tabla-probs', 'data')])
+def calcula_quinielas(n_clicks, bets, min_1, max_1, min_x, max_x, min_2, max_2, 
+                      streak1, streakx, streak2, json_quin):
+    if n_clicks == 0:
+        raise PreventUpdate
+    else:
+        df_quin = pd.DataFrame.from_dict(json_quin, orient='columns')
+        df_quin['1'] = df_quin['1'].apply(lambda x: float(x)/100)
+        df_quin['X'] = df_quin['X'].apply(lambda x: float(x)/100)
+        df_quin['2'] = df_quin['2'].apply(lambda x: float(x)/100)
+        df_quin['n1'] = round(bets*df_quin['1'])+1
+        df_quin['nx'] = round(bets*df_quin['X'])+1
+        df_quin['n2'] = round(bets*df_quin['2'])+1
+        q = pd.DataFrame(np.nan, index=range(14), columns=range(bets))
+        opcs=0
+        for quiniela in range(bets):
+            print("calculando quiniela", quiniela)
+            correct = False
+            while correct == False:
+                opcs += 1
+                serie = []
+                for i in range(14):
+                    correct = True
+                    rest1 = df_quin['n1'][i] - sum(q.iloc[i]=='1')
+                    restx = df_quin['nx'][i] - sum(q.iloc[i]=='X')
+                    rest2 = df_quin['n2'][i] - sum(q.iloc[i]=='2')
+                    p1 = rest1 / (rest1 + rest2 + restx)
+                    p2 = rest2 / (rest1 + rest2 + restx)
+                    px = restx / (rest1 + rest2 + restx)
+                    serie.append(choices(['1','X','2'], [p1, px, p2])[0])
+                    n1 = serie.count('1')
+                    n2 = serie.count('2')
+                    nx = serie.count('X')
+                correct = False if ((n1 > max_1) | (n1 < min_1) | (n2 > max_2) | (n2 < min_2) | (nx > max_x) | (nx < min_x) | 
+                                    (eval_streak(serie, '1') > streak1) | (eval_streak(serie, '2') > streak2) | 
+                                    (eval_streak(serie, 'X') > streakx)) else True
+                #print('calculada quiniela nº', quiniela+1, '| Se han calculado', opcs, 'quinielas')
+            q[quiniela] = serie
+        print(opcs, "combinations have been calculated and", bets, "have been selected.")
+        print(q)
+        fileoutput =  os.getcwd() + "\\" +   datetime.datetime.now().strftime('%Y%m%d%H%M%S') + ".xlsx"
+        return(fileoutput)
+
+
+
+        
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=True, dev_tools_ui=True, dev_tools_props_check=True)

@@ -1,29 +1,15 @@
-    html.Div([
-        html.H5('QUINIELA', style={'textAlign':'center', 'marginBottom':15}),
-        html.Div([       
-                dash_table.DataTable(
-                        id='tabla-quin', 
-                        columns=[{"name": i, "id": i} for i in df_teams.columns], 
-                        data=df_teams.to_dict('records'),
-                        style_cell_conditional=[
-                                {'if': {'column_id': 'LOCAL'}, 'width': '30%', 'textAlign': 'center'},
-                                {'if': {'column_id': 'VISITANTE'},'width': '30%'},
-                                {'textAlign':'center'}
-                        ], 
-                ),                
-        ], style={'width':'60%'}),
-            
-        html.Div([       
-                dash_table.DataTable(
-                        id='tabla-probs', 
-                        columns=[{"name": i, "id": i} for i in df_probs.columns], 
-                        data=df_probs.to_dict('records'),
-                        style_cell_conditional=[
-                                {'textAlign':'center'}
-                        ], 
-                ),                
-        ], style={'width':'40%', 'display':'inline-block', 'float':'right'}),
+import dash
+import dash_html_components as html
 
-                
-                
-    ], style={'width': '50%', 'padding':15}),
+
+app = dash.Dash(__name__, external_stylesheets=['https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css'])
+
+
+app.layout = html.Div([
+
+    html.I(id='submit-button', n_clicks=0, className='fa fa-send'),
+])
+
+
+if __name__ == "__main__":
+    app.run_server()
