@@ -56,8 +56,8 @@ html.Div([
         html.Div([
                 html.Div([
                     #html.Span(className='fa fa-trophy', style={'marginRight':'15px'}),
-                    html.Span(children="QUINIELA", style={'fontWeight':600, 'letterSpacing':'.1rem'}),
-                    html.Span(children="by Albert", style={'fontSize':'14px','marginLeft':'10px'}),
+                    html.Span(children="QUINIELA", style={'fontWeight':600, 'letterSpacing':'.3rem'}),
+                    #html.Span(children="by Albert", style={'fontSize':'14px','marginLeft':'10px'}),
                 ], style={'textAlign':'center', 'color':'white', 'backgroundColor':'grey', 'lineHeight':'50px', 'fontSize':'20px'})
         ], style={'width':'100%'})                    
 ], style={'display':'flex', 'flexDirection':'row', 'margin':'15px 16px 10px 16px'}),
@@ -167,7 +167,7 @@ html.Div([
                         
                         html.Div([
                                 html.Div([html.Div(children='Extreme', style={'float':'left', 'width':150, 'display':'inline-block', 'lineHeight':'38px', 'textAlign':'center', 'fontSize':11, 'letterSpacing':'.1rem', 'textTransform':'uppercase', 'fontWeight':600, 'border':'1px solid #bbb', 'boxSizing':'border-box', 'borderRadius':4, 'color':'#555'}), 
-                                          html.Div([dcc.Slider(id='extreme', min=0,max=100, marks={i: 'Label {}'.format(i) if i == 1 else str(i) for i in range(0, 110, 10)}, value=0)], style={'marginLeft':150, 'paddingTop':4})
+                                          html.Div([dcc.Slider(id='extreme', min=0,max=100, marks={i: 'Label {}'.format(i) if i == 1 else str(i) for i in range(0, 110, 10)}, value=0)], style={'marginLeft':150, 'paddingTop':4, 'paddingLeft':'15px', 'paddingRight':'15px'})
                                 ]),
                         ]),
                                
@@ -369,19 +369,19 @@ def update_quiniela(n_clicks):
     if n_clicks == 0:
         raise PreventUpdate
     else:
-        URL = 'https://resultados.as.com/quiniela/'
+        URL = 'https://juegos.loteriasyapuestas.es/jugar/la-quiniela/apuesta/'
         page = requests.get(URL)
         soup = BeautifulSoup(page.content, 'html.parser')
-        seccion = soup.find(class_='cont-quiniela')
-        equipos = seccion.find_all('', class_='nombre-equipo', )
+        results = soup.find(class_='boleto-partidos')
+        equipos = results.find_all('', class_='nombre', )
         quiniela = [equipo.text for equipo in equipos]
         visitor = [equipo for i, equipo in enumerate(quiniela) if i % 2 == 1]
         local = [equipo for i, equipo in enumerate(quiniela) if i % 2 == 0]
         quiniela_df = pd.DataFrame(list(zip(local, visitor)), 
-                                   columns =['LOCAL', 'VISITANTE']) 
+                       columns =['LOCAL', 'VISITANTE']) 
         with open('./bbdd/teams_dict.json') as json_file:
             teams_dict = json.load(json_file)
-        df = quiniela_df[0:14].copy()
+        df = quiniela_df.copy()
         df['LOCAL'] = [teams_dict[i] for i in df['LOCAL']]
         df['VISITANTE'] = [teams_dict[i] for i in df['VISITANTE']]
         return(df.to_dict('records'))
@@ -730,4 +730,4 @@ def calcula_quinielas(n_clicks, bets, min_1, max_1, min_x, max_x, min_2, max_2,
 
         
 if __name__ == '__main__':
-    app.run_server(debug=True, dev_tools_ui=True, dev_tools_props_check=True)
+    app.run_server(debug=False, dev_tools_ui=False, dev_tools_props_check=False)
