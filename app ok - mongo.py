@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -17,10 +16,9 @@ from random import choices
 import os
 import pymongo
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css', 'https://codepen.io/chriddyp/pen/brPBPO.css']
 
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
+app = dash.Dash(__name__, external_stylesheets=['https://codepen.io/chriddyp/pen/bWLwgP.css', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css'])
 
 # CONNECTION TO MONGO
 client = pymongo.MongoClient(
@@ -29,6 +27,12 @@ db = client.quiniela
 mongo = list(db.teams.find({}))
 mongo[0].pop('_id')
 teamsmdb = list(mongo[0].keys())
+
+
+mongo = list(db.teamsdict.find({}))
+mongo[0].pop('_id')
+df_mongo = pd.DataFrame.from_dict(mongo, orient='columns')
+teams_dict = df_mongo.set_index('ORIGINAL')['FINAL'].to_dict()
 
 
 # FIRST QUINIELA WHEN LOADING APP
@@ -40,19 +44,32 @@ visitante =['Real Madrid', 'Espanyol', 'Barcelona', 'Sevilla', 'Real Betis', 'Ba
             'Real Madrid', 'Barcelona', 'Barcelona', 'Atletico Madrid']
 
 df = pd.DataFrame(list(zip(local, visitante)), columns =['LOCAL', 'VISITANTE']) 
-df['1'] = df['X'] = df['2'] = 0.3333
+df['1'] = df['X'] = df['2'] = 33.33
 df_teams = df.iloc[:, :2]
 df_probs = df.iloc[:, 2:]
-
 
 
 
     
 app.layout = dcc.Loading([ 
 
+            
 html.Div([
         html.Div([
-            html.Div([html.H5('QUINIELA', style={'textAlign':'center', 'width':'100%', 'backgroundColor':'#e3e3e3', 'marginBottom':10}),]),
+                html.Img(src='https://lotoluck.com/img/logo_quiniela_grande.png', style={'height':'50px'}),
+        ], style={'backgroundColor':'white', 'marginRight':'10px', 'border':'1px solid #ddd', 'display':'none'}),                 
+    
+        html.Div([
+                html.Div([
+                    #html.Span(className='fa fa-trophy', style={'marginRight':'15px'}),
+                    html.Span(children="QUINIELA", style={'fontWeight':600, 'letterSpacing':'.3rem'}),
+                    #html.Span(children="by Albert", style={'fontSize':'14px','marginLeft':'10px'}),
+                ], style={'textAlign':'center', 'color':'white', 'backgroundColor':'grey', 'lineHeight':'50px', 'fontSize':'20px'})
+        ], style={'width':'100%'})                    
+], style={'display':'flex', 'flexDirection':'row', 'margin':'15px 16px 10px 16px'}),
+            
+html.Div([
+        html.Div([
             
             html.Div([                    
                     html.Div([       
@@ -80,8 +97,8 @@ html.Div([
                                             {'if': {'column_id': 'VISITANTE'},'width': '50%'},
                                             {'textAlign':'center'}
                                     ], 
-                                    style_cell={'height': '35px'},
-                                    style_header={'height':'30px'},
+                                    style_cell={'height': '35px', 'fontFamily':'sans-serif', 'letterSpacing':'0.1rem', 'fontSize':'12px'},
+                                    style_header={'height':'30px', 'fontFamily':'sans-serif', 'letterSpacing':'0.1rem', 'fontWeight':600, 'fontSize':'12px'},
                             ),                
                     ], style={'width':'60%', 'padding':'0px 2px 0px 0px'}),
                         
@@ -91,8 +108,8 @@ html.Div([
                                     columns=[{"name": i, "id": i} for i in df_probs.columns], 
                                     data=df_probs.to_dict('records'),
                                     editable=False,
-                                    style_cell={'height': '35px'},
-                                    style_header={'height':'30px'},                                    
+                                    style_cell={'height': '35px', 'fontFamily':'sans-serif', 'letterSpacing':'0.1rem', 'fontSize':'12px'},
+                                    style_header={'height':'30px', 'fontFamily':'sans-serif', 'letterSpacing':'0.1rem', 'fontWeight':600, 'fontSize':'12px' },                                    
                                     style_cell_conditional=[
                                             {'textAlign':'center'}
                                     ], 
@@ -109,12 +126,18 @@ html.Div([
 
             ], style={'display':'flex', 'flexDirection':'row'})
             
-        ], style={'width':'50%', 'padding':'15px 5px 5px 15px',}),
+        ], style={'width':'50%'}),
         
         html.Div([
-            html.Div([html.H5('CONFIGURACIO', style={'textAlign':'center', 'width':'100%', 'backgroundColor':'#e3e3e3', 'borderRight':'2px solid #e3e3e3'}),], style={'marginBottom':10}),
             
             html.Div([
+                html.Div([
+                        html.P([
+                                html.Span(className='fa fa-gear', style={'marginRight':'10px', 'fontSize':'medium'}), 
+                                html.Span('CONFIGURATION')
+                        ], style={'fontWeight':600, 'letterSpacing':'.1rem', 'textTransform':'uppercase', 'lineHeight':'30px', 'textAlign':'center', 'width':'100%', 'backgroundColor':'#e3e3e3', 'margin':0, 'fontSize':'12px'}),
+                ], style={'marginBottom':20}),
+            
                 html.Div([
                 
                         html.Div([
@@ -123,80 +146,101 @@ html.Div([
                                         n_clicks=0, 
                                         children='Update', 
                                         style={'width':150, 'marginRight': 10}),
+                                #html.Span(className='fa fa-refresh', style={'marginRight':'5px', 'fontSize':'medium'}), 
                                 html.Div(
                                         id="update-text", 
                                         children="Update database with last games", 
                                         style={'display': 'inline-block'})                        
-                                ], style={'marginBottom': 3, 'marginTop': 3}),
+                                ], style={'marginBottom': 3, 'marginTop': 3, 'fontSize':'small', 'letterSpacing':'0.1rem'}),
                                 
-                        html.Div([html.Button(id='loadquin-button', n_clicks=0, children='Load', style={'width':150, 'marginRight': 10}),  "Load current Quiniela"], style={'marginBottom': 3, 'marginTop': 3}),
-                        html.Div([html.Button(id='probsquin-button', n_clicks=0, children='Probabilities', style={'width':150, 'marginRight': 10}),  "Calculate 1X2 probabilities"], style={'marginBottom': 3, 'marginTop': 3}),
-                        html.Div([html.Button(id='limits-button', n_clicks=0, children='Limits', style={'width':150, 'marginRight': 10}),  "Limits on 1X2 results"], style={'marginBottom': 3, 'marginTop': 3}),
+                        html.Div([
+                                html.Button(id='loadquin-button', n_clicks=0, children='Load', style={'width':150, 'marginRight': 10}), 
+                                #html.Span(className='fa fa-cloud-download', style={'marginRight':'5px', 'fontSize':'medium'}),  
+                                html.Span("Load current Quiniela")
+                        ], style={'marginBottom': 3, 'marginTop': 3, 'fontSize':'small', 'letterSpacing':'0.1rem'}),
+                        
+                        html.Div([
+                                html.Button(id='probsquin-button', n_clicks=0, children='Probabilities', style={'width':150, 'marginRight': 10}), 
+                                #html.Span(className='fa fa-percent', style={'marginRight':'5px', 'fontSize':'medium'}), 
+                                html.Span("Calculate 1X2 probabilities")
+                        ], style={'marginBottom': 3, 'marginTop': 3, 'fontSize':'small', 'letterSpacing':'0.1rem'}),
+                        
+                        html.Div([
+                                html.Button(id='limits-button', n_clicks=0, children='Limits', style={'width':150, 'marginRight': 10}), 
+                                 #html.Span(className='fa fa-arrows-alt', style={'marginRight':'5px', 'fontSize':'medium'}), 
+                                html.Span("Automatic limits on 1X2 results")
+                        ], style={'marginBottom': 3, 'marginTop': 3, 'fontSize':'small', 'letterSpacing':'0.1rem'}),
                         
                         html.Div([
                                 html.Div([html.Div(children='Extreme', style={'float':'left', 'width':150, 'display':'inline-block', 'lineHeight':'38px', 'textAlign':'center', 'fontSize':11, 'letterSpacing':'.1rem', 'textTransform':'uppercase', 'fontWeight':600, 'border':'1px solid #bbb', 'boxSizing':'border-box', 'borderRadius':4, 'color':'#555'}), 
-                                          html.Div([dcc.Slider(id='extreme', min=0,max=100, marks={i: 'Label {}'.format(i) if i == 1 else str(i) for i in range(0, 110, 10)}, value=0)], style={'marginLeft':150, 'paddingTop':4})
+                                          html.Div([dcc.Slider(id='extreme', min=0,max=100, marks={i: 'Label {}'.format(i) if i == 1 else str(i) for i in range(0, 110, 10)}, value=0)], style={'marginLeft':150, 'paddingTop':4, 'paddingLeft':'15px', 'paddingRight':'15px'})
                                 ]),
                         ]),
                                
-                        html.Hr(style={'marginTop':24, 'marginBottom':20}),
+                        #html.Hr(style={'marginTop':24, 'marginBottom':20}),
+                        html.Div([
+                                html.Span(className='fa fa-caret-left', style={'marginRight':'2px', 'fontSize':'medium'}), 
+                                html.Span(className='fa fa-caret-right', style={'marginRight':'10px', 'fontSize':'medium'}), 
+                                html.Span('TUNE LIMITS', style={}),
+                        ], style={'margin':'30px 0 10px 0', 'fontWeight':600, 'letterSpacing':'.1rem', 'textTransform':'uppercase', 'lineHeight':'30px', 'textAlign':'center', 'width':'100%', 'backgroundColor':'#e3e3e3', 'fontSize':'12px'}),
             
                         html.Div([
                                 html.Div([html.Div("", style={'float':'left', 'width':150})], style={'marginRight':10}),
                                 html.Div([
-                                        html.Div([html.Div('1 results', style={'width':'100%', 'textAlign':'center'})], style={'width':'33%', 'padding':2}),
-                                        html.Div([html.Div('X results', style={'width':'100%', 'textAlign':'center'})], style={'width':'33%', 'padding':2}),
-                                        html.Div([html.Div('2 results', style={'width':'100%', 'textAlign':'center'})], style={'width':'33%', 'padding':2}),
-                                ], style={'display':'flex', 'flexDirection':'row', 'width':'100%'})
+                                        html.Div([html.Div('1 results', style={'width':'100%', 'textAlign':'center'})], style={'width':'33%', 'lineHeight':'38px'}),
+                                        html.Div([html.Div('X results', style={'width':'100%', 'textAlign':'center'})], style={'width':'33%', 'lineHeight':'38px'}),
+                                        html.Div([html.Div('2 results', style={'width':'100%', 'textAlign':'center'})], style={'width':'33%', 'lineHeight':'38px'}),
+                                ], style={'display':'flex', 'flexDirection':'row', 'width':'100%', 'letterSpacing':'0.1rem', 'fontSize':'11px', 'textTransform':'uppercase', 'fontWeight':600})
                         ], style={'display':'flex', 'flexDirection':'row'}),
                         
                         html.Div([
-                                html.Div([html.Div("Minimum:", style={'lineHeight':'38px', 'textAlign':'center', 'float':'left', 'width':150})], style={'marginRight':10}),
+                                html.Div([html.Div("Minimum:", style={'lineHeight':'38px', 'textAlign':'center', 'float':'left', 'width':150, 'letterSpacing':'0.1rem', 'fontSize':'11px', 'textTransform':'uppercase', 'fontWeight':600})], style={'marginRight':10}),
                                 html.Div([
                                         html.Div([dcc.Input(id="min1", value=0, type='number', style={'width':'100%'})], style={'width':'33%', 'padding':2}),
                                         html.Div([dcc.Input(id="minx", value=0, type='number', style={'width':'100%'})], style={'width':'33%', 'padding':2}),                        
                                         html.Div([dcc.Input(id="min2", value=0, type='number', style={'width':'100%'})], style={'width':'33%', 'padding':2}),                            
-                                ], style={'display':'flex', 'flexDirection':'row', 'width':'100%'})
+                                ], style={'display':'flex', 'flexDirection':'row', 'width':'100%', 'fontSize':'small'})
                         ], style={'display':'flex', 'flexDirection':'row'}),
                         
                         html.Div([
-                                html.Div([html.Div("Maximum:", style={'lineHeight':'38px', 'textAlign':'center', 'float':'left', 'width':150})], style={'marginRight':10}),
+                                html.Div([html.Div("Maximum:", style={'lineHeight':'38px', 'textAlign':'center', 'float':'left', 'width':150, 'letterSpacing':'0.1rem', 'fontSize':'11px', 'textTransform':'uppercase', 'fontWeight':600})], style={'marginRight':10}),
                                 html.Div([
                                         html.Div([dcc.Input(id="max1", value=14, type='number', style={'width':'100%'})], style={'width':'33%', 'padding':2}),
                                         html.Div([dcc.Input(id="maxx", value=14, type='number', style={'width':'100%'})], style={'width':'33%', 'padding':2}),                        
                                         html.Div([dcc.Input(id="max2", value=14, type='number', style={'width':'100%'})], style={'width':'33%', 'padding':2}),                            
-                                ], style={'display':'flex', 'flexDirection':'row', 'width':'100%'})
+                                ], style={'display':'flex', 'flexDirection':'row', 'width':'100%', 'fontSize':'small'})
                         ], style={'display':'flex', 'flexDirection':'row'}),
             
                         html.Div([
-                                html.Div([html.Div("Longest Streak:", style={'lineHeight':'38px', 'textAlign':'center', 'float':'left', 'width':150})], style={'marginRight':10}),
+                                html.Div([html.Div("Longest Streak:", style={'lineHeight':'38px', 'textAlign':'center', 'float':'left', 'width':150, 'letterSpacing':'0.1rem', 'fontSize':'11px', 'textTransform':'uppercase', 'fontWeight':600})], style={'marginRight':10}),
                                 html.Div([
                                         html.Div([dcc.Input(id="str1", value=14, type='number', style={'width':'100%'})], style={'width':'33%', 'padding':2}),
                                         html.Div([dcc.Input(id="strx", value=14, type='number', style={'width':'100%'})], style={'width':'33%', 'padding':2}),                        
                                         html.Div([dcc.Input(id="str2", value=14, type='number', style={'width':'100%'})], style={'width':'33%', 'padding':2}),                            
-                                ], style={'display':'flex', 'flexDirection':'row', 'width':'100%'})
+                                ], style={'display':'flex', 'flexDirection':'row', 'width':'100%', 'fontSize':'small'})
                         ], style={'display':'flex', 'flexDirection':'row'}),
                     
-                ], style={'padding':20})
-                
-            ], style={'width': '100%', 'border':'1px solid #d3d3d3', 'minHeight':'518px'}),
+                ], style={'padding':0})
+            ]),
                         
-        ], style={'width':'50%', 'padding':'15px 15px 5px 5px',}),    
-], style={'display':'flex', 'flexDirection':'row'}),
+        ], style={'width':'50%', 'paddingLeft':'25px',}),    
+], style={'display':'flex', 'flexDirection':'row', 'padding':20, 'margin':'10px 16px 10px 16px', 'border':'1px solid #d3d3d3', 'backgroundColor':'white'}),
                     
 html.Div([
         html.Div([
                 html.Div([
-                        html.Div("Number of bets:", style={'lineHeight':'38px', 'marginRight':15}),
-                        dcc.Input(id="nquin", value=25, type='number', style={'width':100, 'height':38}),
-                        html.Button(id='calc-button', n_clicks=0, children='Calculate', style={'marginLeft': 10}),                               
-                ], style={'float':'left', 'width':380, 'display':'flex', 'flexDirection':'row'})
+                        
+                        html.Div([html.Span(className='fa fa-money', style={'marginRight':'7px', 'fontSize':'medium'}), "Number of bets:"], style={'lineHeight':'38px', 'marginRight':10, 'letterSpacing':'0.1rem', 'fontSize':'small', }),
+                        dcc.Input(id="nquin", value=25, type='number', style={'width':100, 'height':38, 'fontSize':'small'}),
+                        html.Button(id='calc-button', n_clicks=0, children='Calculate', style={'marginLeft': 10}),       
+                ], style={'float':'left', 'width':405, 'display':'flex', 'flexDirection':'row'})
         ], style={}),
                     
         html.Div([
-                html.Div(children="No file with bets generated yet.", id="status-quin", style={'lineHeight':'38px', 'marginLeft':15,})
+                html.Span(className='fa fa-download', style={'marginLeft':'15px', 'lineHeight':'38px', 'fontSize':'medium'}), 
+                html.Span(children="No file with bets generated yet.", id="status-quin", style={'lineHeight':'38px', 'marginLeft':10, 'fontFamily':'monospace'})
         ], style={'backgroundColor':'#f3f3f3', 'width':'100%'})                    
-], style={'display':'flex', 'flexDirection':'row', 'padding':'10px 15px', 'margin':'5px 13px 0 15px', 'border':'1px solid #d3d3d3'}),
+], style={'display':'flex', 'flexDirection':'row', 'padding':'10px 15px', 'margin':'10px 16px 15px 16px', 'border':'1px solid #d3d3d3', 'backgroundColor':'white'}),
 
 
 ], type='dot', fullscreen=True)
@@ -245,7 +289,7 @@ def max_streak(df, res):
 
 # last n games of home or away team
 def last_games(df, league, team, date, season, ngames):
-    select = df[(df['LIGA']==league) & ((df['LOCAL']==team) | (df['VISITANTE']==team)) & 
+    select = df[(df['LIGA']==league) & ((df['LOCAL']==team) | (df['VISITANTE']==team)) &
             (df['FECHA'] < date) & (df['TEMPORADA']==season)][-ngames:]
     games = select.shape[0] + 1/2
     WINS = (sum(select['QUINIELA'][select.LOCAL==team]=='1') + sum(select['QUINIELA'][select.VISITANTE==team]=='2') + 1/6)/games
@@ -294,7 +338,7 @@ def h2h_5_homeaway(df, date, home_team, away_team):
     return(HOME, DRAW, AWAY)
     
 # referee: historical results
-def ref_team(df, date, team, referee):
+def ref_team(df, date, team, referee):  
     select = df[(df['FECHA'] < date) & ((df['LOCAL']==team) | (df['VISITANTE']==team)) & (df['ARBITRO']==referee)]
     games = select.shape[0] + 1/2
     WINS = (sum(select['QUINIELA'][select.LOCAL==team]=='1') + 
@@ -331,18 +375,16 @@ def update_quiniela(n_clicks):
     if n_clicks == 0:
         raise PreventUpdate
     else:
-        URL = 'https://resultados.as.com/quiniela/'
+        URL = 'https://juegos.loteriasyapuestas.es/jugar/la-quiniela/apuesta/'
         page = requests.get(URL)
         soup = BeautifulSoup(page.content, 'html.parser')
-        seccion = soup.find(class_='cont-quiniela')
-        equipos = seccion.find_all('', class_='nombre-equipo', )
+        results = soup.find(class_='boleto-partidos')
+        equipos = results.find_all('', class_='nombre', )
         quiniela = [equipo.text for equipo in equipos]
         visitor = [equipo for i, equipo in enumerate(quiniela) if i % 2 == 1]
         local = [equipo for i, equipo in enumerate(quiniela) if i % 2 == 0]
         quiniela_df = pd.DataFrame(list(zip(local, visitor)), 
-                                   columns =['LOCAL', 'VISITANTE']) 
-        with open('./bbdd/teams_dict.json') as json_file:
-            teams_dict = json.load(json_file)
+                       columns =['LOCAL', 'VISITANTE']) 
         df = quiniela_df.copy()
         df['LOCAL'] = [teams_dict[i] for i in df['LOCAL']]
         df['VISITANTE'] = [teams_dict[i] for i in df['VISITANTE']]
@@ -357,9 +399,13 @@ def update_database(n_clicks, df_quin):
     if n_clicks == 0:
         raise PreventUpdate
     else:
-        print('abriendo fichero historico de partidos')
-        xl = pd.ExcelFile('./bbdd/FULL_BBDD_only_results.xlsx')
-        dfr = xl.parse(xl.sheet_names[0])
+        print('abriendo fichero historico de partidos') 
+        client = pymongo.MongoClient("mongodb+srv://Albert:madannnn@cluster0-wghee.mongodb.net/test?retryWrites=true&w=majority")
+        db = client.quiniela
+        mongo = list(db.withfeatures.find({}))
+        dfr = pd.DataFrame.from_dict(mongo, orient='columns')
+        dfr.drop(columns=['_id'], inplace=True)
+        dfr.FECHA = dfr.FECHA.apply(lambda x: datetime.datetime.fromtimestamp(x/1000).date())        
         maxdate = max(dfr.FECHA)
         print('leído fichero historico de partidos. fecha máxima', maxdate)
         headers = {'x-rapidapi-key': "28d61524ab5698a1f8edb9e9ed577221"}
@@ -378,7 +424,7 @@ def update_database(n_clicks, df_quin):
         JORNADA = []  
         QUINIELA = []
         for i in league_1['api']['fixtures']:
-            if (datetime.datetime.strptime(i['event_date'][:10], '%Y-%m-%d') > maxdate) and (i['status']=='Match Finished'):
+            if (datetime.datetime.strptime(i['event_date'][:10], '%Y-%m-%d').date() > maxdate) and (i['status']=='Match Finished'):
                     FECHA.append(datetime.datetime.strptime(i['event_date'][:10], '%Y-%m-%d'))
                     LOCAL.append(i['homeTeam']['team_name'])
                     VISITANTE.append(i['awayTeam']['team_name'])
@@ -392,7 +438,7 @@ def update_database(n_clicks, df_quin):
                             if i['goalsHomeTeam'] < i['goalsAwayTeam'] else QUINIELA.append('X')
         print('leídos partidos primera division')
         for i in league_2['api']['fixtures']:
-            if (datetime.datetime.strptime(i['event_date'][:10], '%Y-%m-%d') > maxdate) and (i['status']=='Match Finished'):
+            if (datetime.datetime.strptime(i['event_date'][:10], '%Y-%m-%d').date() > maxdate) and (i['status']=='Match Finished'):
                     FECHA.append(datetime.datetime.strptime(i['event_date'][:10], '%Y-%m-%d'))
                     LOCAL.append(i['homeTeam']['team_name'])
                     VISITANTE.append(i['awayTeam']['team_name'])
@@ -410,41 +456,34 @@ def update_database(n_clicks, df_quin):
                                  'ARBITRO', 'QUINIELA'])
         print('numero de partidos a añadir:', len(new))
         if len(new)>0:        
-            print('actualizando bbdd de equipos y arbitros')
-            with open('./bbdd/teams_dict.json') as json_file:
-                teams_dict = json.load(json_file)
-            with open('./bbdd/referees_dict.json') as json_file:
-                referees_dict = json.load(json_file)
-            print('actualizando arbitros')
-            save_r = False
-            for i in new['ARBITRO']:
-                if i not in referees_dict:
-                    referees_dict.update({i:i})
-                    save_r = True
-            save_t = False
             print('actualizando equipos')
             for i in new['LOCAL']:
                 if i not in teams_dict:
                     teams_dict.append({i:i})
-                    save_t = True            
+                    inserta = {'ORIGINAL': i, 'FINAL': i}
+                    db = client.quiniela
+                    db.teamsdict.drop()
+                    teamsdict = db.teamsdict
+                    teamsdict.insert_one(inserta)                             
             for i in new['VISITANTE']:
                 if i not in teams_dict:
                     teams_dict.append({i:i})
-                    save_t = True
+                    inserta = {'ORIGINAL': i, 'FINAL': i}
+                    db = client.quiniela
+                    db.teamsdict.drop()
+                    teamsdict = db.teamsdict
+                    teamsdict.insert_one(inserta)                   
             print('aplicando diccionarios a bbdd de partidos')
             new['LOCAL'] = [teams_dict[i] for i in new['LOCAL']]
             new['VISITANTE'] = [teams_dict[i] for i in new['VISITANTE']]
-            new['ARBITRO'] = [referees_dict[i] for i in new['ARBITRO']]
-            print('guardando cambios en diccionarios')
-            if save_r:
-                with open('./bbdd/referees_dict.json', 'w') as outfile:
-                        json.dump(referees_dict, outfile)                
-            if save_t:
-                with open('./bbdd/teams_dict.json', 'w') as outfile:
-                        json.dump(teams_dict, outfile)
             print('guardando bbdd con partidos nuevos')
+            records = json.loads(new.T.to_json()).values()
+            print("Records to be uploaded to MongoDB")
+            print(records)
+            db = client.quiniela
+            onlyresults = db.onlyresults
+            onlyresults.insert_many(records)            
             df_new = dfr.append(new, ignore_index=True, sort=False)
-            df_new.to_excel("./bbdd/FULL_BBDD_only_results.xlsx", index=False)
             print('añadiendo informacion sobre ultimos partidos (1/14)')
             new['last2_hometeam_wdl'] = new.apply(lambda x: last_games(df_new, x[1], x[4], x[3], x[0], 2), axis=1)
             print('añadiendo informacion sobre ultimos partidos (2/14)')
@@ -484,13 +523,12 @@ def update_database(n_clicks, df_quin):
                 new[name2] = new[i].apply(lambda x: x[1])
                 new[name3] = new[i].apply(lambda x: x[2])
             new.drop(columns, inplace=True, axis=1)
-            print('añadiendo informacion a bbdd. abriendo bbdd')
-            xl = pd.ExcelFile('./bbdd/FULL_BBDD_with_features.xlsx')
-            dfr = xl.parse(xl.sheet_names[0])
-            df_new = dfr.append(new, ignore_index=True, sort=False)
-            print('guardando fichero con partidos nuevos y todas las características')
-            df_new.to_excel("./bbdd/FULL_BBDD_with_features.xlsx", index=False)
-            maxdate = max(df_new.FECHA)
+            print('añadiendo informacion a bbdd. abriendo bbdd') 
+            records = json.loads(new.T.to_json()).values()
+            db = client.quiniela
+            withfeatures = db.withfeatures
+            withfeatures.insert_many(records)
+            maxdate = max(new.FECHA)
         print('proceso finalizado')
         return("Database up to date. Last game: ", str(maxdate)[:10])
 
@@ -505,8 +543,12 @@ def update_probsquin(n_clicks, json_quin):
     else:
         df_quin = pd.DataFrame.from_dict(json_quin, orient='columns')
         print('abro bbdd con datos historicos')
-        xl = pd.ExcelFile('./bbdd/FULL_BBDD_only_results.xlsx')
-        historic = xl.parse(xl.sheet_names[0])
+        client = pymongo.MongoClient("mongodb+srv://Albert:madannnn@cluster0-wghee.mongodb.net/test?retryWrites=true&w=majority")
+        db = client.quiniela
+        mongo = list(db.onlyresults.find({}))
+        historic = pd.DataFrame.from_dict(mongo, orient='columns')
+        historic.drop(columns=['_id'], inplace=True)
+        historic.FECHA = historic.FECHA.apply(lambda x: datetime.datetime.fromtimestamp(x/1000).date())
         print('seleccionando datos de temporada actual')
         select_1 = list(historic[(historic['TEMPORADA']==2019) & (historic['LIGA']==1)].LOCAL.unique())
         select_2 = list(historic[(historic['TEMPORADA']==2019) & (historic['LIGA']==2)].LOCAL.unique())
@@ -519,6 +561,7 @@ def update_probsquin(n_clicks, json_quin):
         df_quin['JORNADA'] = 'X'
         df_quin['FECHA'] = datetime.datetime.today().strftime('%Y-%m-%d')
         df_quin = df_quin[['TEMPORADA', 'LIGA', 'JORNADA', 'FECHA', 'LOCAL', 'VISITANTE']]
+        df_quin['FECHA'] = df_quin['FECHA'].apply(lambda x: datetime.datetime.strptime(x, '%Y-%m-%d').date())
         print('añadiendo características a cada partido de la quiniela (1/10)')
         df_quin['last2_hometeam_wdl'] = df_quin.apply(lambda x: last_games(historic, x[1], x[4], x[3], x[0], 2), axis=1)
         print('añadiendo características a cada partido de la quiniela (2/10)')
@@ -558,10 +601,6 @@ def update_probsquin(n_clicks, json_quin):
         print('cargando modelo "2"')
         clf_2 = pickle.load(open('./models/model2.sav', 'rb'))
         print('creando variables para ejecutar modelo')
-        dummy1 = pd.get_dummies(df_quin.LOCAL)
-        dummy2 = pd.get_dummies(df_quin.VISITANTE)
-        dummy2.columns = [i+"_2" for i in dummy2.columns]
-        df_quin = pd.concat([df_quin, dummy1, dummy2], axis=1)
         variables = pickle.load(open('./models/variables.sav', 'rb'))
         add_col = [i for i in list(variables) if i not in list(df_quin.columns)]
         add_col = [i for i in add_col if i not in ['GOL L', 'GOL V', 'QUINIELA', 'ARBITRO', '1', 'X', '2']]
@@ -694,7 +733,6 @@ def calcula_quinielas(n_clicks, bets, min_1, max_1, min_x, max_x, min_2, max_2,
         return(fileoutput)
 
 
-
         
 if __name__ == '__main__':
-    app.run_server(debug=True, dev_tools_ui=True, dev_tools_props_check=True)
+    app.run_server(debug=False, dev_tools_ui=False, dev_tools_props_check=False)
