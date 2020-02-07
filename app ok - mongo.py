@@ -64,7 +64,7 @@ html.Div([
                     #html.Span(className='fa fa-trophy', style={'marginRight':'15px'}),
                     html.Span(children="QUINIELA", style={'fontWeight':600, 'letterSpacing':'.3rem'}),
                     #html.Span(children="by Albert", style={'fontSize':'14px','marginLeft':'10px'}),
-                ], style={'textAlign':'center', 'color':'white', 'backgroundColor':'grey', 'lineHeight':'50px', 'fontSize':'20px'})
+                ], style={'textAlign':'center', 'color':'white', 'backgroundColor':'#79b598', 'lineHeight':'50px', 'fontSize':'20px'})
         ], style={'width':'100%'})                    
 ], style={'display':'flex', 'flexDirection':'row', 'margin':'15px 16px 10px 16px'}),
             
@@ -182,7 +182,7 @@ html.Div([
                                 html.Span(className='fa fa-caret-left', style={'marginRight':'2px', 'fontSize':'medium'}), 
                                 html.Span(className='fa fa-caret-right', style={'marginRight':'10px', 'fontSize':'medium'}), 
                                 html.Span('TUNE LIMITS', style={}),
-                        ], style={'margin':'30px 0 10px 0', 'fontWeight':600, 'letterSpacing':'.1rem', 'textTransform':'uppercase', 'lineHeight':'30px', 'textAlign':'center', 'width':'100%', 'backgroundColor':'#e3e3e3', 'fontSize':'12px'}),
+                        ], style={'margin':'60px 0 10px 0', 'fontWeight':600, 'letterSpacing':'.1rem', 'textTransform':'uppercase', 'lineHeight':'30px', 'textAlign':'center', 'width':'100%', 'backgroundColor':'#e3e3e3', 'fontSize':'12px'}),
             
                         html.Div([
                                 html.Div([html.Div("", style={'float':'left', 'width':150})], style={'marginRight':10}),
@@ -725,11 +725,18 @@ def calcula_quinielas(n_clicks, bets, min_1, max_1, min_x, max_x, min_2, max_2,
                 correct = False if ((n1 > max_1) | (n1 < min_1) | (n2 > max_2) | (n2 < min_2) | (nx > max_x) | (nx < min_x) | 
                                     (eval_streak(serie, '1') > streak1) | (eval_streak(serie, '2') > streak2) | 
                                     (eval_streak(serie, 'X') > streakx)) else True
-                #print('calculada quiniela nº', quiniela+1, '| Se han calculado', opcs, 'quinielas')
+                print('calculada quiniela nº', quiniela+1, '| Se han calculado', opcs, 'quinielas')
+                if opcs > (bets*10):
+                    print('limite alcanzado')
+                    break
             q[quiniela] = serie
+            if opcs > (bets*10):
+                    break
+
         print(opcs, "combinations have been calculated and", bets, "have been selected.")
         print(q)
-        fileoutput =  os.getcwd() + "\\" +   datetime.datetime.now().strftime('%Y%m%d%H%M%S') + ".xlsx"
+        fileoutput =  os.getcwd() + "\\" +   datetime.datetime.now().strftime('%Y%m%d%H%M%S') + ' (' + str(bets) + ')'".xlsx"
+        q.to_excel(fileoutput, index=False)
         return(fileoutput)
 
 
