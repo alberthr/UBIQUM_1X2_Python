@@ -8,15 +8,13 @@
 - Create a Mongo Data Base
 - Use AWS to store and exploit databases
 - Make predictions with machine learning models
-- Use Plotly Dash or Shiny (¿?) to create a functional dashboard to configure and visualize games and probabilities for each future game
+- Use Plotly Dash to create a functional dashboard to configure and visualize games and probabilities for each future game
 
 Tools and technologies used: 
-- Python (pandas, numpy, json)
+- Python (pandas, numpy, json...)
 - Machine Learning (Random Forest, GBM, SVM, KNN, XGB, Logistic...)
 - APIs
 - Beatiful Soup (Scrapping)
-- AWS Lambda
 - Mongo DB 
 - Matplotlib for small visualizations
-
-Work in progress...
+- Plotly Dash to create the webapp
